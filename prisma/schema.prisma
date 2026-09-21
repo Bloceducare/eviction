@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Exam {
+  id              String   @id @default(cuid())
+  title           String
+  durationMinutes Int      @default(90)
+  accessCode      String   @unique
+  /// DRAFT | OPEN | RUNNING | CLOSED
+  status          String   @default("DRAFT")
+  /// JSON: { questionsPerSection, shuffleOptions, maxViolations, releaseResults }
+  config          String   @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  attempts        Attempt[]
+}
+
+model Question {
+  id          String   @id
+  section     String
+  difficulty  String
+  /// mcq | multi | open
+  type        String
+  text        String
+  code        String?
+  /// JSON array of option strings
+  options     String?
+  /// JSON: number for mcq, number[] for multi
+  answer      String?
+  explanation String?
+  /// JSON array of rubric strings
+  rubric      String?
+  points      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Attempt {
+  id            String    @id @default(cuid())
+  examId        String
+  exam          Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentName   String
+  studentEmail  String
+  /// JSON ordered array of question ids
+  questionIds   String
+  /// JSON map of questionId -> shuffled option index order
+  optionOrder   String    @default("{}")
+  sessionToken  String    @unique
+  startedAt     DateTime?
+  deadlineAt    DateTime?
+  submittedAt   DateTime?
+  /// IN_PROGRESS | SUBMITTED | AUTO_SUBMITTED
+  status        String    @default("IN_PROGRESS")
+  autoScore     Float?
+  manualScore   Float?
+  totalScore    Float?
+  lastHeartbeat DateTime?
+  strikeCount   Int       @default(0)
+  disconnected  Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  answers       Answer[]
+  violations    ViolationEvent[]
+
+  @@unique([examId, studentEmail])
+  @@index([examId, status])
+}
+
+model Answer {
+  id             String   @id @default(cuid())
+  attemptId      String
+  attempt        Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId     String
+  /// JSON value: number | number[] | string
+  value          String
+  updatedAt      DateTime @updatedAt
+  manualScore    Float?
+  manualFeedback String?
+
+  @@unique([attemptId, questionId])
+}
+
+model ViolationEvent {
+  id        String   @id @default(cuid())
+  attemptId String
+  attempt   Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  type      String
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@index([attemptId, createdAt])
+}
