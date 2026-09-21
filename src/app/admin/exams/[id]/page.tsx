@@ -302,6 +302,38 @@ export default function ExamManagePage() {
           {message}
         </p>
       )}
+
+      <section className="card mt-8 border-danger/30">
+        <h2 className="text-lg font-semibold text-danger">Danger zone</h2>
+        <p className="mt-1 text-sm text-muted">
+          Permanently delete this exam and all student attempts, answers, and
+          violation logs.
+        </p>
+        <button
+          type="button"
+          className="btn btn-danger mt-4"
+          onClick={async () => {
+            if (
+              !confirm(
+                `Delete “${exam.title}”? This cannot be undone.`
+              )
+            ) {
+              return;
+            }
+            const res = await fetch(`/api/admin/exams/${exam.id}`, {
+              method: "DELETE",
+            });
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              setMessage(data.error ?? "Delete failed");
+              return;
+            }
+            router.replace("/admin");
+          }}
+        >
+          Delete exam
+        </button>
+      </section>
     </div>
   );
 }

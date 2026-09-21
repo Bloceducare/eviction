@@ -68,6 +68,14 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
 export async function DELETE(_req: NextRequest, ctx: Ctx) {
   if (!(await requireAdmin())) return jsonError("Unauthorized", 401);
   const { id } = await ctx.params;
-  await prisma.exam.delete({ where: { id } });
-  return jsonOk({ ok: true });
+  try {
+    await prisma.exam.delete({ where: { id } });
+    return jsonOk({ ok: true });
+  } catch (e) {
+    console.error("exam delete failed", e);
+    return jsonError(
+      "Could not delete exam. It may already be gone, or the database rejected the delete.",
+      500
+    );
+  }
 }

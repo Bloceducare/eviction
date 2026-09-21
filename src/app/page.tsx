@@ -1,32 +1,39 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function StudentLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [accessCode, setAccessCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/portal")
+      .then((r) => {
+        if (r.ok) router.replace("/dashboard");
+      })
+      .catch(() => {});
+  }, [router]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/student", {
+      const res = await fetch("/api/auth/portal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, accessCode }),
+        body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? "Login failed");
         return;
       }
-      router.push("/exam/lobby");
+      window.location.href = "/dashboard";
     } catch {
       setError("Network error. Try again.");
     } finally {
@@ -35,17 +42,17 @@ export default function StudentLoginPage() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center p-6">
+    <main className="flex flex-1 items-center justify-center bg-[radial-gradient(ellipse_at_top,_#e8f5f3_0%,_var(--bg)_55%)] p-6">
       <div className="w-full max-w-md">
         <p className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight text-ink">
           Web3Bridge
         </p>
-        <h1 className="mt-2 text-xl text-muted">Knowledge Assessment</h1>
+        <h1 className="mt-2 text-xl text-muted">Student exam portal</h1>
         <p className="mt-2 text-sm text-muted">
-          Sign in with your Student Portal account, then enter the exam access
-          code from your instructor.
+          Sign in once with your portal account. Join exams with an access code
+          from your dashboard — no need to re-enter your password each time.
         </p>
-        <form onSubmit={onSubmit} className="card mt-8 space-y-4">
+        <form onSubmit={onSubmit} method="post" className="card mt-8 space-y-4">
           <div>
             <label htmlFor="email" className="mb-1 block text-sm font-medium">
               Portal email
@@ -78,22 +85,6 @@ export default function StudentLoginPage() {
               autoComplete="current-password"
             />
           </div>
-          <div>
-            <label
-              htmlFor="accessCode"
-              className="mb-1 block text-sm font-medium"
-            >
-              Exam access code
-            </label>
-            <input
-              id="accessCode"
-              className="input uppercase tracking-widest"
-              value={accessCode}
-              onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-              required
-              autoComplete="off"
-            />
-          </div>
           {error && (
             <p className="text-sm text-danger" role="alert">
               {error}
@@ -104,7 +95,7 @@ export default function StudentLoginPage() {
             className="btn btn-primary w-full"
             disabled={loading}
           >
-            {loading ? "Signing in…" : "Enter exam lobby"}
+            {loading ? "Signing in…" : "Continue to dashboard"}
           </button>
         </form>
         <p className="mt-4 text-center text-sm text-muted">

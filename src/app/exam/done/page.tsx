@@ -68,8 +68,8 @@ export default function DonePage() {
             Scores and explanations are released by the instructor when ready.
           </p>
         )}
-        <Link href="/" className="btn btn-secondary mt-6 inline-flex">
-          Back to login
+        <Link href="/dashboard" className="btn btn-secondary mt-6 inline-flex">
+          Back to dashboard
         </Link>
       </div>
     </main>

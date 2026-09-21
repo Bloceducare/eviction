@@ -22,7 +22,7 @@ npm run db:seed
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) (students) and [http://localhost:3000/admin/login](http://localhost:3000/admin/login) (instructor).
+Open [http://localhost:3000](http://localhost:3000) — students sign in with portal email/password, then use **/dashboard** to join exams by access code and resume past attempts. Instructors use [http://localhost:3000/admin/login](http://localhost:3000/admin/login).
 
 ### Environment variables
 

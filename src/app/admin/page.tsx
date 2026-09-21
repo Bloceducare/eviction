@@ -59,6 +59,24 @@ export default function AdminHomePage() {
     router.push(`/admin/exams/${data.exam.id}`);
   }
 
+  async function deleteExam(exam: Exam) {
+    const attempts = exam._count?.attempts ?? 0;
+    const ok = confirm(
+      attempts > 0
+        ? `Delete “${exam.title}”? This also removes ${attempts} student attempt(s), answers, and violations.`
+        : `Delete “${exam.title}”?`
+    );
+    if (!ok) return;
+    setError("");
+    const res = await fetch(`/api/admin/exams/${exam.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Could not delete exam");
+      return;
+    }
+    await load();
+  }
+
   if (loading) return <p className="text-muted">Loading…</p>;
 
   return (
@@ -141,6 +159,13 @@ export default function AdminHomePage() {
                   >
                     Results
                   </Link>
+                  <button
+                    type="button"
+                    className="text-danger underline"
+                    onClick={() => void deleteExam(exam)}
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
