@@ -32,6 +32,9 @@ Open [http://localhost:3000](http://localhost:3000) (students) and [http://local
 | `ADMIN_EMAIL` | Instructor login email |
 | `ADMIN_PASSWORD` | Instructor login password |
 | `SESSION_SECRET` | HMAC secret for session cookies (min 16 chars) |
+| `PORTAL_API_URL` | Web3Bridge Student Portal base URL (default: Koyeb deployment) |
+
+Students sign in with their **portal email + password** (validated against [`/auth/login`](https://free-regina-web3bridge-39707ef5.koyeb.app/docs); only ACTIVE accounts), plus the exam access code.
 
 ## Importing questions
 

@@ -16,6 +16,15 @@ type StudentRow = {
   lastViolation: { type: string; createdAt: string } | null;
 };
 
+type ActivityItem = {
+  id: string;
+  attemptId: string;
+  studentName: string;
+  type: string;
+  detail: string | null;
+  createdAt: string;
+};
+
 type TimelineEvent = {
   id: string;
   type: string;
@@ -31,15 +40,21 @@ function fmtRemaining(ms: number | null) {
   return `${m}:${String(r).padStart(2, "0")}`;
 }
 
+function fmtTime(iso: string) {
+  return new Date(iso).toLocaleTimeString();
+}
+
 export default function LiveMonitorPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [students, setStudents] = useState<StudentRow[]>([]);
+  const [activityLog, setActivityLog] = useState<ActivityItem[]>([]);
   const [examTitle, setExamTitle] = useState("");
   const [examStatus, setExamStatus] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [error, setError] = useState("");
+  const [sideTab, setSideTab] = useState<"activity" | "student">("activity");
 
   useEffect(() => {
     let es: EventSource | null = null;
@@ -61,6 +76,8 @@ export default function LiveMonitorPage() {
             setExamTitle(data.exam.title);
             setExamStatus(data.exam.status);
             setStudents(data.students);
+            setActivityLog(data.activityLog ?? []);
+            setError("");
           }
         } catch {
           /* ignore */
@@ -77,6 +94,7 @@ export default function LiveMonitorPage() {
 
   async function loadTimeline(attemptId: string) {
     setSelected(attemptId);
+    setSideTab("student");
     const res = await fetch(`/api/admin/attempts/${attemptId}`);
     const data = await res.json();
     setTimeline(data.attempt?.violations ?? []);
@@ -86,7 +104,12 @@ export default function LiveMonitorPage() {
     attemptId: string,
     act: "add_time" | "force_submit" | "reset"
   ) {
-    if (act === "reset" && !confirm("Reset this attempt? All answers and violations will be cleared.")) {
+    if (
+      act === "reset" &&
+      !confirm(
+        "Reset this attempt? All answers and violations will be cleared."
+      )
+    ) {
       return;
     }
     if (act === "force_submit" && !confirm("Force-submit this student?")) {
@@ -116,7 +139,7 @@ export default function LiveMonitorPage() {
       </p>
       {error && <p className="mt-2 text-sm text-warn">{error}</p>}
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_360px]">
         <div className="card overflow-x-auto p-0">
           <table className="table">
             <thead>
@@ -157,11 +180,9 @@ export default function LiveMonitorPage() {
                   </td>
                   <td>{s.strikeCount}</td>
                   <td className="text-xs">
-                    {s.lastViolation
-                      ? `${s.lastViolation.type}`
-                      : "—"}
+                    {s.lastViolation ? `${s.lastViolation.type}` : "—"}
                   </td>
-                  <td className="whitespace-nowrap space-x-1">
+                  <td className="space-x-1 whitespace-nowrap">
                     <button
                       type="button"
                       className="btn btn-secondary !px-2 !py-1 text-xs"
@@ -197,29 +218,82 @@ export default function LiveMonitorPage() {
           </table>
         </div>
 
-        <aside className="card">
-          <h2 className="font-semibold">Violation timeline</h2>
-          {!selected && (
-            <p className="mt-2 text-sm text-muted">
-              Select a student to view events.
-            </p>
+        <aside className="card flex max-h-[75vh] flex-col">
+          <div className="flex gap-2 border-b border-border pb-2">
+            <button
+              type="button"
+              className={`btn !px-3 !py-1 text-xs ${sideTab === "activity" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => setSideTab("activity")}
+            >
+              Everyone
+            </button>
+            <button
+              type="button"
+              className={`btn !px-3 !py-1 text-xs ${sideTab === "student" ? "btn-primary" : "btn-secondary"}`}
+              onClick={() => setSideTab("student")}
+            >
+              Student
+            </button>
+          </div>
+
+          {sideTab === "activity" ? (
+            <>
+              <h2 className="mt-3 font-semibold">Activity log</h2>
+              <p className="text-xs text-muted">
+                Live feed of logins, starts, violations, and submissions.
+              </p>
+              {activityLog.length === 0 && (
+                <p className="mt-3 text-sm text-muted">No activity yet.</p>
+              )}
+              <ol className="mt-3 flex-1 space-y-2 overflow-y-auto text-sm">
+                {activityLog.map((ev) => (
+                  <li
+                    key={ev.id}
+                    className="cursor-pointer border-b border-border pb-2 hover:bg-slate-50"
+                    onClick={() => void loadTimeline(ev.attemptId)}
+                  >
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="font-medium">{ev.type}</span>
+                      <span className="shrink-0 text-xs text-muted">
+                        {fmtTime(ev.createdAt)}
+                      </span>
+                    </div>
+                    <div className="text-xs font-medium text-accent">
+                      {ev.studentName}
+                    </div>
+                    {ev.detail && (
+                      <div className="text-xs text-muted">{ev.detail}</div>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </>
+          ) : (
+            <>
+              <h2 className="mt-3 font-semibold">Student timeline</h2>
+              {!selected && (
+                <p className="mt-2 text-sm text-muted">
+                  Select a student (or an activity row) to view their events.
+                </p>
+              )}
+              {selected && timeline.length === 0 && (
+                <p className="mt-2 text-sm text-muted">No events recorded.</p>
+              )}
+              <ol className="mt-3 flex-1 space-y-2 overflow-y-auto text-sm">
+                {timeline.map((v) => (
+                  <li key={v.id} className="border-b border-border pb-2">
+                    <div className="font-medium">{v.type}</div>
+                    <div className="text-xs text-muted">
+                      {fmtTime(v.createdAt)}
+                    </div>
+                    {v.detail && (
+                      <div className="text-xs text-muted">{v.detail}</div>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </>
           )}
-          {selected && timeline.length === 0 && (
-            <p className="mt-2 text-sm text-muted">No violations recorded.</p>
-          )}
-          <ol className="mt-3 max-h-[60vh] space-y-2 overflow-y-auto text-sm">
-            {timeline.map((v) => (
-              <li key={v.id} className="border-b border-border pb-2">
-                <div className="font-medium">{v.type}</div>
-                <div className="text-xs text-muted">
-                  {new Date(v.createdAt).toLocaleTimeString()}
-                </div>
-                {v.detail && (
-                  <div className="text-xs text-muted">{v.detail}</div>
-                )}
-              </li>
-            ))}
-          </ol>
         </aside>
       </div>
     </div>
