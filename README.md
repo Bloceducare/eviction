@@ -44,9 +44,9 @@ The bank lives in `web3_exam_questions.json`. Seeding:
 npm run db:seed
 ```
 
-Admins can also paste or upload JSON on **Admin → Question bank** (preview, then import). Edit individual questions from the table. Points for `mcq`/`multi` come from `meta.pointsByDifficulty`; `open` questions use their own `points`.
+Admins manage **question banks** under Admin → Question banks. Create as many banks as you need (each can hold 1k+ questions via JSON import). On an exam, choose a bank and **questions per student** — each attempt draws a random sample in random order from that bank.
 
-On each exam’s manage page you can set **questions per section** (blank = all). Students still get a random draw/order.
+**Critical:** `answer`, `explanation`, and `rubric` are never sent to student clients. Grading is server-side only.
 
 **Critical:** `answer`, `explanation`, and `rubric` are never sent to student clients. Grading is server-side only.
 

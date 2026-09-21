@@ -18,8 +18,9 @@ type RawQuestion = {
   points?: number;
 };
 
-type Bank = {
+type BankFile = {
   meta: {
+    title?: string;
     pointsByDifficulty: Record<string, number>;
     openEndedPoints: number;
   };
@@ -28,50 +29,62 @@ type Bank = {
 
 async function main() {
   const bankPath = path.join(process.cwd(), "web3_exam_questions.json");
-  const bank: Bank = JSON.parse(fs.readFileSync(bankPath, "utf-8"));
-  const { pointsByDifficulty, openEndedPoints } = bank.meta;
+  const file: BankFile = JSON.parse(fs.readFileSync(bankPath, "utf-8"));
+  const { pointsByDifficulty, openEndedPoints } = file.meta;
+  const bankName = file.meta.title ?? "Web3Bridge Default Bank";
+
+  const bank = await prisma.questionBank.upsert({
+    where: { id: "seed-default-bank" },
+    create: {
+      id: "seed-default-bank",
+      name: bankName,
+      description: "Seeded from web3_exam_questions.json",
+    },
+    update: {
+      name: bankName,
+      description: "Seeded from web3_exam_questions.json",
+    },
+  });
 
   let upserted = 0;
-  for (const q of bank.questions) {
+  for (const q of file.questions) {
     const points =
       q.type === "open"
         ? (q.points ?? openEndedPoints)
         : pointsByDifficulty[q.difficulty] ?? 1;
 
-    await prisma.question.upsert({
-      where: { id: q.id },
-      create: {
-        id: q.id,
-        section: q.section,
-        difficulty: q.difficulty,
-        type: q.type,
-        text: q.question,
-        code: q.code ?? null,
-        options: q.options ? JSON.stringify(q.options) : null,
-        answer:
-          q.answer !== undefined ? JSON.stringify(q.answer) : null,
-        explanation: q.explanation ?? null,
-        rubric: q.rubric ? JSON.stringify(q.rubric) : null,
-        points,
-      },
-      update: {
-        section: q.section,
-        difficulty: q.difficulty,
-        type: q.type,
-        text: q.question,
-        code: q.code ?? null,
-        options: q.options ? JSON.stringify(q.options) : null,
-        answer:
-          q.answer !== undefined ? JSON.stringify(q.answer) : null,
-        explanation: q.explanation ?? null,
-        rubric: q.rubric ? JSON.stringify(q.rubric) : null,
-        points,
-      },
+    const existing = await prisma.question.findFirst({
+      where: { bankId: bank.id, key: q.id },
     });
+
+    const data = {
+      section: q.section,
+      difficulty: q.difficulty,
+      type: q.type,
+      text: q.question,
+      code: q.code ?? null,
+      options: q.options ? JSON.stringify(q.options) : null,
+      answer: q.answer !== undefined ? JSON.stringify(q.answer) : null,
+      explanation: q.explanation ?? null,
+      rubric: q.rubric ? JSON.stringify(q.rubric) : null,
+      points,
+    };
+
+    if (existing) {
+      await prisma.question.update({ where: { id: existing.id }, data });
+    } else {
+      await prisma.question.create({
+        data: {
+          bankId: bank.id,
+          key: q.id,
+          ...data,
+        },
+      });
+    }
     upserted++;
   }
 
-  console.log(`Seeded ${upserted} questions.`);
+  console.log(`Seeded bank "${bank.name}" (${bank.id}) with ${upserted} questions.`);
 }
 
 main()

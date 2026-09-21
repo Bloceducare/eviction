@@ -14,15 +14,28 @@ model Exam {
   accessCode      String   @unique
   /// DRAFT | OPEN | RUNNING | CLOSED
   status          String   @default("DRAFT")
-  /// JSON: { questionsPerSection, shuffleOptions, maxViolations, releaseResults }
+  /// JSON: { bankId, questionCount, questionsPerSection?, shuffleOptions, maxViolations, releaseResults }
   config          String   @default("{}")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   attempts        Attempt[]
 }
 
+model QuestionBank {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  questions   Question[]
+}
+
 model Question {
-  id          String   @id
+  id          String       @id @default(cuid())
+  bankId      String
+  bank        QuestionBank @relation(fields: [bankId], references: [id], onDelete: Cascade)
+  /// Optional key within the bank (e.g. "f01" from JSON import)
+  key         String?
   section     String
   difficulty  String
   /// mcq | multi | open
@@ -37,8 +50,12 @@ model Question {
   /// JSON array of rubric strings
   rubric      String?
   points      Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([bankId, key])
+  @@index([bankId])
+  @@index([bankId, section])
 }
 
 model Attempt {

@@ -1,8 +1,14 @@
 import { z } from "zod";
 
 export const examConfigSchema = z.object({
-  /** Per-section counts; omit or null = all questions in that section */
-  questionsPerSection: z.record(z.string(), z.number().int().positive().nullable()).optional(),
+  /** Question bank to draw from */
+  bankId: z.string().min(1).optional().nullable(),
+  /** How many questions each student gets (random sample). null/omit = all in bank */
+  questionCount: z.number().int().positive().nullable().optional(),
+  /** Optional stratified draw; omit or null per section = use global questionCount / all */
+  questionsPerSection: z
+    .record(z.string(), z.number().int().positive().nullable())
+    .optional(),
   shuffleOptions: z.boolean().default(true),
   maxViolations: z.number().int().positive().default(3),
   releaseResults: z.boolean().default(false),
@@ -11,6 +17,8 @@ export const examConfigSchema = z.object({
 export type ExamConfig = z.infer<typeof examConfigSchema>;
 
 export const defaultExamConfig: ExamConfig = {
+  bankId: null,
+  questionCount: null,
   shuffleOptions: true,
   maxViolations: 3,
   releaseResults: false,

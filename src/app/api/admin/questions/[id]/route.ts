@@ -7,15 +7,14 @@ import { getAdminSession } from "@/lib/session";
 type Ctx = { params: Promise<{ id: string }> };
 
 const updateSchema = z.object({
+  key: z.string().nullable().optional(),
   section: z.string().min(1).optional(),
   difficulty: z.string().min(1).optional(),
   type: z.enum(["mcq", "multi", "open"]).optional(),
   text: z.string().min(1).optional(),
   code: z.string().nullable().optional(),
   options: z.array(z.string()).nullable().optional(),
-  answer: z
-    .union([z.number(), z.array(z.number()), z.null()])
-    .optional(),
+  answer: z.union([z.number(), z.array(z.number()), z.null()]).optional(),
   explanation: z.string().nullable().optional(),
   rubric: z.array(z.string()).nullable().optional(),
   points: z.number().int().positive().optional(),
@@ -57,6 +56,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
 
   const d = parsed.data;
   const data: Record<string, unknown> = {};
+  if (d.key !== undefined) data.key = d.key;
   if (d.section !== undefined) data.section = d.section;
   if (d.difficulty !== undefined) data.difficulty = d.difficulty;
   if (d.type !== undefined) data.type = d.type;

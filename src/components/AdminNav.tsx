@@ -21,7 +21,7 @@ export function AdminNav() {
             Exams
           </Link>
           <Link href="/admin/questions" className="text-muted hover:text-ink">
-            Question bank
+            Question banks
           </Link>
           <button
             type="button"
