@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Web3Bridge Proctored Exam Platform
 
-## Getting Started
+Timed, monitored in-class exam for Web3Bridge assessments, with an instructor dashboard for live monitoring, grading, and results.
 
-First, run the development server:
+## Stack
+
+- Next.js (App Router) + TypeScript + Tailwind CSS
+- Prisma + SQLite (swap `DATABASE_URL` for PostgreSQL in production)
+- httpOnly signed session cookies (`jose`)
+- Server-Sent Events for the admin live monitor
+- `zod` validation, in-memory rate limits on student endpoints
+
+## Setup
 
 ```bash
+cp .env.example .env
+# edit ADMIN_EMAIL, ADMIN_PASSWORD, SESSION_SECRET, DATABASE_URL
+
+npm install
+npm run db:push
+npm run db:seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) (students) and [http://localhost:3000/admin/login](http://localhost:3000/admin/login) (instructor).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Prisma connection string (`file:./dev.db` for SQLite) |
+| `ADMIN_EMAIL` | Instructor login email |
+| `ADMIN_PASSWORD` | Instructor login password |
+| `SESSION_SECRET` | HMAC secret for session cookies (min 16 chars) |
 
-## Learn More
+## Importing questions
 
-To learn more about Next.js, take a look at the following resources:
+The bank lives in `web3_exam_questions.json`. Seeding:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run db:seed
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Admins can also paste JSON on **Admin → Question bank** (preview, then import). Points for `mcq`/`multi` come from `meta.pointsByDifficulty`; `open` questions use their own `points`.
 
-## Deploy on Vercel
+**Critical:** `answer`, `explanation`, and `rubric` are never sent to student clients. Grading is server-side only.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Exam day checklist
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Seed / verify the question bank.
+2. Create an exam in Admin; note the access code.
+3. Set status to **OPEN** so students can enter the lobby.
+4. When ready, set status to **RUNNING** (“Start for everyone”).
+5. Watch **Live monitor** for progress, strikes, and disconnects.
+6. After submissions, grade open-ended answers, then **Release results** and export CSV.
+
+Each student gets a random question order and (by default) shuffled options. Their timer starts when they click **Start exam** (deadline = start + duration). The server clock is authoritative.
+
+## Anti-cheat notes
+
+The client logs tab switches, focus loss, fullscreen exit, clipboard use, shortcuts, and rough DevTools heuristics. Strikes are counted **server-side**. Browsers cannot fully prevent cheating (e.g. a second device), so run this on supervised lab machines.
+
+For a stricter lockdown, use [Safe Exam Browser](https://safeexambrowser.org/) (or equivalent) to lock down the workstation.
+
+## Scripts
+
+| Script | Description |
+|---|---|
+| `npm run dev` | Development server |
+| `npm run build` / `start` | Production build & serve |
+| `npm run db:push` | Apply Prisma schema |
+| `npm run db:seed` | Import `web3_exam_questions.json` |
+| `npm run db:reset` | Wipe DB and re-seed |
