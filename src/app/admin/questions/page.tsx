@@ -304,9 +304,23 @@ export default function QuestionsPage() {
       <section className="card mt-8">
         <h2 className="text-lg font-semibold">Import JSON</h2>
         <p className="mt-1 text-sm text-muted">
-          Paste the full bank file (with meta + questions) or a questions array.
-          Preview before saving.
+          Upload a bank file or paste JSON. Preview before saving.
         </p>
+        <input
+          type="file"
+          accept="application/json,.json"
+          className="mt-3 block text-sm"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            try {
+              setImportText(await file.text());
+              setMsg(`Loaded ${file.name}`);
+            } catch {
+              setMsg("Could not read file");
+            }
+          }}
+        />
         <textarea
           className="input mt-3 min-h-[160px] font-[family-name:var(--font-mono)] text-xs"
           value={importText}

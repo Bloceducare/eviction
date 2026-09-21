@@ -20,11 +20,25 @@ type ExamDetail = {
 
 const STATUSES = ["DRAFT", "OPEN", "RUNNING", "CLOSED"] as const;
 
+const SECTIONS = [
+  "fundamentals",
+  "evm_gas",
+  "solidity",
+  "security",
+  "defi",
+  "tokens",
+  "tooling",
+  "open_ended",
+] as const;
+
 export default function ExamManagePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [exam, setExam] = useState<ExamDetail | null>(null);
   const [message, setMessage] = useState("");
+  const [sectionCounts, setSectionCounts] = useState<
+    Record<string, string>
+  >({});
 
   async function load() {
     const res = await fetch(`/api/admin/exams/${id}`);
@@ -34,6 +48,12 @@ export default function ExamManagePage() {
     }
     const data = await res.json();
     setExam(data.exam);
+    const qps = data.exam?.config?.questionsPerSection ?? {};
+    const next: Record<string, string> = {};
+    for (const s of SECTIONS) {
+      next[s] = qps[s] == null ? "" : String(qps[s]);
+    }
+    setSectionCounts(next);
   }
 
   useEffect(() => {
@@ -192,6 +212,50 @@ export default function ExamManagePage() {
             Release results to students
           </label>
         </div>
+      </section>
+
+      <section className="card mt-6 space-y-3">
+        <h2 className="text-lg font-semibold">Questions per section</h2>
+        <p className="text-sm text-muted">
+          Leave blank to include all questions in that section. Each student
+          still gets a random subset and order.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {SECTIONS.map((s) => (
+            <div key={s}>
+              <label className="mb-1 block text-xs font-medium">{s}</label>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                placeholder="all"
+                value={sectionCounts[s] ?? ""}
+                onChange={(e) =>
+                  setSectionCounts({
+                    ...sectionCounts,
+                    [s]: e.target.value,
+                  })
+                }
+              />
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => {
+            const questionsPerSection: Record<string, number | null> = {};
+            for (const s of SECTIONS) {
+              const raw = sectionCounts[s]?.trim();
+              questionsPerSection[s] = raw
+                ? Math.max(1, Number(raw))
+                : null;
+            }
+            void patch({ config: { questionsPerSection } });
+          }}
+        >
+          Save section counts
+        </button>
       </section>
 
       {message && (

@@ -90,7 +90,7 @@ export function setStudentCookie(res: NextResponse, token: string) {
   res.cookies.set(STUDENT_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: false,
     path: "/",
     maxAge: 60 * 60 * 8,
   });
@@ -100,7 +100,8 @@ export function setAdminCookie(res: NextResponse, token: string) {
   res.cookies.set(ADMIN_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    // Allow cookies on local http; enable Secure only when serving over HTTPS
+    secure: false,
     path: "/",
     maxAge: 60 * 60 * 12,
   });

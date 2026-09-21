@@ -27,6 +27,13 @@ export default function AdminHomePage() {
       router.replace("/admin/login");
       return;
     }
+    if (!res.ok) {
+      setError(
+        "Could not load exams. Check DATABASE_URL and restart the server."
+      );
+      setLoading(false);
+      return;
+    }
     const data = await res.json();
     setExams(data.exams ?? []);
     setLoading(false);

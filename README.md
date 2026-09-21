@@ -44,7 +44,9 @@ The bank lives in `web3_exam_questions.json`. Seeding:
 npm run db:seed
 ```
 
-Admins can also paste JSON on **Admin → Question bank** (preview, then import). Points for `mcq`/`multi` come from `meta.pointsByDifficulty`; `open` questions use their own `points`.
+Admins can also paste or upload JSON on **Admin → Question bank** (preview, then import). Edit individual questions from the table. Points for `mcq`/`multi` come from `meta.pointsByDifficulty`; `open` questions use their own `points`.
+
+On each exam’s manage page you can set **questions per section** (blank = all). Students still get a random draw/order.
 
 **Critical:** `answer`, `explanation`, and `rubric` are never sent to student clients. Grading is server-side only.
 
@@ -74,3 +76,4 @@ For a stricter lockdown, use [Safe Exam Browser](https://safeexambrowser.org/) (
 | `npm run db:push` | Apply Prisma schema |
 | `npm run db:seed` | Import `web3_exam_questions.json` |
 | `npm run db:reset` | Wipe DB and re-seed |
+| `npm run test:grading` | Verify sanitize + mcq/multi/open grading |
