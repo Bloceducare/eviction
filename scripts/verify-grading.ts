@@ -14,6 +14,8 @@ function q(
     Pick<Question, "id" | "type" | "points" | "answer">
 ): Question {
   return {
+    bankId: "seed-default-bank",
+    key: partial.id,
     section: "fundamentals",
     difficulty: "easy",
     text: "Q",

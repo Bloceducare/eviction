@@ -110,6 +110,16 @@ export default function ExamManagePage() {
 
       <section className="card mt-6 space-y-4">
         <h2 className="text-lg font-semibold">Status</h2>
+        <p className="text-sm text-muted">
+          Current:{" "}
+          <span className="font-semibold text-ink">{exam.status}</span>
+          {exam.status === "OPEN" &&
+            " — students can enter the lobby and wait."}
+          {exam.status === "RUNNING" &&
+            " — students can start the exam; each timer begins when they click Start."}
+          {exam.status === "DRAFT" && " — not visible to students yet."}
+          {exam.status === "CLOSED" && " — no new logins or answers."}
+        </p>
         <div className="flex flex-wrap gap-2">
           {STATUSES.map((s) => (
             <button
@@ -117,11 +127,21 @@ export default function ExamManagePage() {
               type="button"
               className={`btn ${exam.status === s ? "btn-primary" : "btn-secondary"}`}
               onClick={() => patch({ status: s })}
+              aria-pressed={exam.status === s}
             >
-              {s === "RUNNING" ? "Start for everyone" : s}
+              {s}
             </button>
           ))}
         </div>
+        {exam.status !== "RUNNING" && (
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => patch({ status: "RUNNING" })}
+          >
+            Start for everyone (set RUNNING)
+          </button>
+        )}
       </section>
 
       <section className="card mt-6 space-y-4">
