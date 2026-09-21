@@ -18,11 +18,6 @@ export default async function AdminLoginPage({ searchParams }: Props) {
         <h1 className="font-[family-name:var(--font-display)] text-2xl font-semibold">
           Instructor login
         </h1>
-        <p className="text-sm text-muted">
-          Defaults from <code className="text-ink">.env</code>:{" "}
-          <code className="text-ink">admin@web3bridge.com</code> /{" "}
-          <code className="text-ink">admin123</code>
-        </p>
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-medium">
             Email
@@ -34,7 +29,6 @@ export default async function AdminLoginPage({ searchParams }: Props) {
             className="input"
             required
             autoComplete="username"
-            defaultValue="admin@web3bridge.com"
           />
         </div>
         <div>
@@ -48,7 +42,6 @@ export default async function AdminLoginPage({ searchParams }: Props) {
             className="input"
             required
             autoComplete="current-password"
-            defaultValue="admin123"
           />
         </div>
         {error && (
