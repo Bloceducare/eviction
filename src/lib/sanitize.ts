@@ -76,3 +76,22 @@ export function unshuffleIndices(
 ): number[] {
   return displayIndices.map((i) => unshuffleIndex(i, optionOrder)).sort((a, b) => a - b);
 }
+
+/** Map a bank/original option index to the student-facing shuffled index. */
+export function shuffleIndex(
+  originalIndex: number,
+  optionOrder: number[] | undefined
+): number {
+  if (!optionOrder || optionOrder.length === 0) return originalIndex;
+  const display = optionOrder.indexOf(originalIndex);
+  return display >= 0 ? display : originalIndex;
+}
+
+export function shuffleIndices(
+  originalIndices: number[],
+  optionOrder: number[] | undefined
+): number[] {
+  return originalIndices
+    .map((i) => shuffleIndex(i, optionOrder))
+    .sort((a, b) => a - b);
+}
